@@ -1,9 +1,31 @@
 import os
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from twilio.twiml.voice_response import VoiceResponse, Enqueue
 from twilio.twiml.voice_response import Dial
+from twilio.rest import Client
+from twilio.base.exceptions import TwilioRestException
 
 app = Flask(__name__)
+
+twilio_client = Client(
+    os.environ.get("TWILIO_ACCOUNT_SID"), os.environ.get("TWILIO_AUTH_TOKEN")
+)
+
+QUEUE_NAME = "support_queue"
+
+
+def get_or_create_queue():
+    """Get the queue if it exists, create it if it doesn't."""
+    try:
+        queues = twilio_client.queues.list()
+        for queue in queues:
+            if queue.friendly_name == QUEUE_NAME:
+                return queue
+
+        queue = twilio_client.queues.create(friendly_name=QUEUE_NAME)
+        return queue
+    except TwilioRestException as e:
+        raise e
 
 
 @app.route("/answer", methods=["GET", "POST"])
@@ -39,5 +61,17 @@ def agent_connect():
     return str(resp)
 
 
+@app.route("/queue-size", methods=["GET"])
+def get_queue_size():
+    """Get the current number of callers in the support queue."""
+    try:
+        queue = get_or_create_queue()
+        return jsonify(
+            {"queue_size": queue.current_size, "queue_name": queue.friendly_name}
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
-    app.run(debug=True, port=3000)
+    app.run(debug=True, port=3001)
