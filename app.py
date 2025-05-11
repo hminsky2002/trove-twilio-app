@@ -4,8 +4,11 @@ from twilio.twiml.voice_response import VoiceResponse, Enqueue
 from twilio.twiml.voice_response import Dial
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
+CORS(app, resources=r"/queue-size")
 
 twilio_client = Client(
     os.environ.get("TWILIO_ACCOUNT_SID"), os.environ.get("TWILIO_AUTH_TOKEN")
