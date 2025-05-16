@@ -5,6 +5,7 @@ from twilio.twiml.voice_response import Dial
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 from flask_cors import CORS
+from flask import url_for
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -16,29 +17,48 @@ twilio_client = Client(
 
 QUEUE_NAME = "support_queue"
 
+MAX_QUEUE_SIZE = 2
+
 
 def get_or_create_queue():
-    """Get the queue if it exists, create it if it doesn't."""
+    """Get the queue if it exists, create/update it if it doesn't or size differs."""
     try:
-        queues = twilio_client.queues.list()
-        for queue in queues:
+        for queue in twilio_client.queues.list():
             if queue.friendly_name == QUEUE_NAME:
+                if queue.max_size != MAX_QUEUE_SIZE:
+                    twilio_client.queues(queue.sid).update(max_size=MAX_QUEUE_SIZE)
                 return queue
 
-        queue = twilio_client.queues.create(friendly_name=QUEUE_NAME)
-        return queue
+        return twilio_client.queues.create(
+            friendly_name=QUEUE_NAME, max_size=MAX_QUEUE_SIZE
+        )
     except TwilioRestException as e:
-        raise e
+        raise
 
 
-@app.route("/answer", methods=["GET", "POST"])
+@app.route("/answer", methods=["POST"])
 def answer_call():
-    """Handle incoming call and place the caller in a queue."""
     resp = VoiceResponse()
-
     resp.play(os.environ["WELCOME_URL"])
 
-    resp.enqueue("support_queue", wait_url="/hold")
+    hold_url = url_for("hold_music", _external=True)
+    action_url = url_for("enqueue_status", _external=True)
+
+    resp.enqueue(QUEUE_NAME, wait_url=hold_url, action=action_url, method="POST")
+    return str(resp)
+
+
+@app.route("/enqueue_status", methods=["POST"])
+def enqueue_status():
+    result = request.values.get("QueueResult")
+    resp = VoiceResponse()
+
+    if result == "queue-full":
+        resp.say("Sorry, our queue is full. Please try again later.")
+        resp.hangup()
+    else:
+        resp.say("Thanks for waiting.")
+        resp.hangup()
 
     return str(resp)
 
