@@ -17,7 +17,7 @@ twilio_client = Client(
 
 QUEUE_NAME = "support_queue"
 
-MAX_QUEUE_SIZE = 2
+MAX_QUEUE_SIZE = 10
 
 
 def get_or_create_queue():
