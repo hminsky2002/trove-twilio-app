@@ -79,7 +79,7 @@ def agent_connect():
     resp = VoiceResponse()
     dial = Dial()
 
-    dial.queue("support_queue")
+    dial.queue(QUEUE_NAME)
     resp.append(dial)
     return str(resp)
 
