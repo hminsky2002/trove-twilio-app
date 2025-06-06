@@ -15,9 +15,9 @@ twilio_client = Client(
     os.environ.get("TWILIO_ACCOUNT_SID"), os.environ.get("TWILIO_AUTH_TOKEN")
 )
 
-QUEUE_NAME = "support_queue_max_size_10"
+QUEUE_NAME = "support_queue_max_size_5"
 
-MAX_QUEUE_SIZE = 10
+MAX_QUEUE_SIZE = 5
 
 
 def get_or_create_queue():
