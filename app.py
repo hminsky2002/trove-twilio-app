@@ -15,7 +15,7 @@ twilio_client = Client(
     os.environ.get("TWILIO_ACCOUNT_SID"), os.environ.get("TWILIO_AUTH_TOKEN")
 )
 
-QUEUE_NAME = "support_queue"
+QUEUE_NAME = "support_queue_max_size_10"
 
 MAX_QUEUE_SIZE = 10
 
