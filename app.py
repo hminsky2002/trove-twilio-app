@@ -54,7 +54,7 @@ def enqueue_status():
     resp = VoiceResponse()
 
     if result == "queue-full":
-        resp.say("Sorry, our queue is full. Please try again later.")
+        resp.play(os.environ["QUEUE_FULL_URL"])
         resp.hangup()
     else:
         resp.say("Thanks for waiting.")
